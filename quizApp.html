@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .quiz-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 350px;
+            padding: 20px;
+            text-align: center;
+        }
+        .quiz-container h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .quiz-container button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .quiz-container button:hover {
+            background-color: #45a049;
+        }
+        .question {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        .timer {
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h1>Quiz App 🧠</h1>
+    <div class="timer" id="timer">Time Left: 30s</div>
+    <div class="question" id="question">What is the capital of France?</div>
+    <button onclick="checkAnswer('A')">A. Paris</button>
+    <button onclick="checkAnswer('B')">B. London</button>
+    <button onclick="checkAnswer('C')">C. Berlin</button>
+    <button onclick="checkAnswer('D')">D. Madrid</button>
+    <div id="feedback"></div>
+    <div id="score"></div>
+    <button id="retryButton" style="display: none;" onclick="retryQuiz()">Retry Quiz</button>
+</div>
+
+<script>
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let timer;
+    let timeLeft = 30;
+    let correctAnswers = 0;
+    let answerHistory = []; // To store the answers
+
+    const allQuestions = [
+        { question: "What is the capital of France?", options: { A: "Paris", B: "London", C: "Berlin", D: "Madrid" }, correctAnswer: "A" },
+        { question: "What is 2 + 2?", options: { A: "3", B: "4", C: "5", D: "6" }, correctAnswer: "B" },
+        { question: "What is the largest planet?", options: { A: "Earth", B: "Mars", C: "Jupiter", D: "Saturn" }, correctAnswer: "C" },
+        { question: "Which language is used for web development?", options: { A: "Java", B: "Python", C: "HTML", D: "C#" }, correctAnswer: "C" },
+        { question: "What is the capital of Japan?", options: { A: "Beijing", B: "Seoul", C: "Tokyo", D: "Bangkok" }, correctAnswer: "C" },
+        { question: "What is the fastest land animal?", options: { A: "Lion", B: "Cheetah", C: "Tiger", D: "Elephant" }, correctAnswer: "B" },
+        { question: "Which country is known as the Land of the Rising Sun?", options: { A: "China", B: "India", C: "Japan", D: "South Korea" }, correctAnswer: "C" },
+        { question: "What is the largest ocean?", options: { A: "Atlantic", B: "Indian", C: "Arctic", D: "Pacific" }, correctAnswer: "D" },
+        { question: "Which element is essential for breathing?", options: { A: "Oxygen", B: "Carbon", C: "Nitrogen", D: "Hydrogen" }, correctAnswer: "A" },
+        { question: "Which is the smallest country in the world?", options: { A: "Vatican City", B: "Monaco", C: "San Marino", D: "Nauru" }, correctAnswer: "A" },
+        { question: "What is the capital of USA?", options: { A: "New York", B: "Washington, D.C.", C: "Los Angeles", D: "Chicago" }, correctAnswer: "B" },
+        { question: "What is the smallest continent?", options: { A: "Asia", B: "Africa", C: "Australia", D: "Europe" }, correctAnswer: "C" },
+        { question: "Which animal is known as the king of the jungle?", options: { A: "Tiger", B: "Lion", C: "Elephant", D: "Bear" }, correctAnswer: "B" },
+        { question: "Which planet is closest to the sun?", options: { A: "Mercury", B: "Venus", C: "Earth", D: "Mars" }, correctAnswer: "A" },
+        { question: "Which element is the most abundant in the Earth's atmosphere?", options: { A: "Oxygen", B: "Carbon", C: "Nitrogen", D: "Hydrogen" }, correctAnswer: "C" },
+        { question: "What is the main ingredient in guacamole?", options: { A: "Tomato", B: "Avocado", C: "Onion", D: "Lime" }, correctAnswer: "B" },
+    ];
+
+    let questions = [];  // This will store the 10 random questions for the quiz
+
+    function startQuiz() {
+        questions = getRandomQuestions();
+        showQuestion();
+        timer = setInterval(updateTimer, 1000);
+    }
+
+    function showQuestion() {
+        const question = questions[currentQuestionIndex];
+        document.getElementById("question").textContent = question.question;
+
+        // Update the answer buttons
+        const answerButtons = document.querySelectorAll('.quiz-container button');
+        let options = question.options;
+        answerButtons[0].textContent = `A. ${options.A}`;
+        answerButtons[1].textContent = `B. ${options.B}`;
+        answerButtons[2].textContent = `C. ${options.C}`;
+        answerButtons[3].textContent = `D. ${options.D}`;
+
+        document.getElementById("feedback").textContent = ''; // Clear feedback from the previous question
+        document.getElementById("score").textContent = `Score: ${score}`;
+    }
+
+    function getRandomQuestions() {
+        // Shuffle the questions and select the first 10 questions
+        let shuffledQuestions = [...allQuestions].sort(() => 0.5 - Math.random());
+        return shuffledQuestions.slice(0, 10);
+    }
+
+    function checkAnswer(selectedOption) {
+        const correctAnswer = questions[currentQuestionIndex].correctAnswer;
+        if (selectedOption === correctAnswer) {
+            score++;
+            answerHistory.push(`Q${currentQuestionIndex + 1}: Correct ✅`);
+        } else {
+            answerHistory.push(`Q${currentQuestionIndex + 1}: Incorrect ❌`);
+        }
+
+        // Show feedback for the current question
+        document.getElementById("feedback").textContent = `You answered ${selectedOption === correctAnswer ? "Correctly ✅" : "Incorrectly ❌"}`;
+
+        // Move to next question after showing feedback
+        currentQuestionIndex++;
+
+        // Check if we have reached the end of the questions
+        if (currentQuestionIndex < questions.length) {
+            setTimeout(showQuestion, 1000);  // Show the next question after 1 second
+        } else {
+            setTimeout(endQuiz, 1000); // End the quiz after the last question
+        }
+    }
+
+    function endQuiz() {
+        clearInterval(timer);
+        document.getElementById("question").textContent = "Quiz Over!";
+        document.getElementById("feedback").textContent = `Your score: ${score} out of ${questions.length}`;
+        document.getElementById("score").textContent = `You got ${score} out of ${questions.length} correct!`;
+        document.getElementById("retryButton").style.display = 'inline-block'; // Show retry button
+    }
+
+    function retryQuiz() {
+        // Reset quiz state
+        currentQuestionIndex = 0;
+        score = 0;
+        timeLeft = 30;
+        document.getElementById("retryButton").style.display = 'none'; // Hide retry button
+        startQuiz(); // Restart the quiz with new questions
+    }
+
+    function updateTimer() {
+        timeLeft--;
+        document.getElementById("timer").textContent = `Time Left: ${timeLeft}s`;
+
+        if (timeLeft === 0) {
+            clearInterval(timer);
+            endQuiz();
+        }
+    }
+
+    startQuiz(); // Start the quiz when the page loads
+</script>
+
+</body>
+</html>
